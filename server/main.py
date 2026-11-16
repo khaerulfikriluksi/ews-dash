@@ -15,7 +15,12 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_db_connection():
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL environment variable is not set!")
-    return psycopg2.connect(DATABASE_URL, sslmode='require')
+    # Tambahkan parameter sslmode dan keepalives untuk kestabilan di Vercel
+    return psycopg2.connect(
+        DATABASE_URL, 
+        sslmode='require',
+        connect_timeout=10
+    )
 
 def init_db():
     try:
