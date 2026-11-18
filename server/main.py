@@ -9,15 +9,13 @@ PUBLIC = os.path.join(BASE, "public")
 
 app = Flask(__name__, static_folder=PUBLIC, static_url_path="")
 
-# Ambil Connection URL dari Environment Variable Vercel (DATABASE_URL)
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
     if not DATABASE_URL:
         raise ValueError("DATABASE_URL environment variable is not set!")
-    # Tambahkan parameter sslmode dan keepalives untuk kestabilan di Vercel
     return psycopg2.connect(
-        DATABASE_URL, 
+        DATABASE_URL,
         sslmode='require',
         connect_timeout=10
     )
@@ -26,8 +24,7 @@ def init_db():
     try:
         conn = get_db_connection()
         cur = conn.cursor()
-        
-        # Buat tabel metadata (menyimpan crawling_date & summary terakhir)
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS metadata (
                 id SERIAL PRIMARY KEY,
@@ -35,8 +32,7 @@ def init_db():
                 summary TEXT NOT NULL
             )
         """)
-        
-        # Buat tabel posts (menyimpan data postingan EWS dengan unique constraint pada normalized_url)
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS posts (
                 id SERIAL PRIMARY KEY,
@@ -51,39 +47,30 @@ def init_db():
                 react TEXT
             )
         """)
-        
-        # Seed data awal jika tabel posts masih kosong
+
         cur.execute("SELECT COUNT(*) FROM posts")
         if cur.fetchone()[0] == 0:
             default_summary = [
-                "Priority 1 - 6 postingan, Negative terkait Fraud, Security, dan Reputational Risk (Catut nama MTF/Mandiri Taspen, Dugaan ATO Livin, Rumor serangan siber ATM Nangapinoh, Joki BSU, Demo AMPB)",
-                "Priority 2 - 4 postingan, Negative terkait Gangguan Sistem (Klaster gangguan Livin massal 08-11 Nov, KOPRA gangguan 2 hari, ATM error, Kartu debit terblokir)",
-                "Priority 3 - 1 postingan, Negative terkait Layanan Cabang (Antrean padat KCP Bogor Gunung Putri)",
-                "Priority 4 - 3 postingan, Positive terkait Program & Promo (Livin MARKT Senayan City, Promo Wingstop, Promo Super Indo)",
-                "Per platform: Facebook 5, Threads 5, Instagram 4"
+                "Priority 1 - 2 postingan, Negative terkait Fraud (SMS Phishing poin kartu kredit link palsu mandiri-mi.biz.id & Telepon penipuan catut nama Bank Mandiri)",
+                "Priority 2 - 6 postingan, Negative terkait Livin, Livin Merchant, dan Employee / HR (Saldo hilang 1.7 juta, Livin Merchant diblokir & pencairan dana tertahan Rp10,75 juta, Livin error 18 Nov, Dugaan paksaan order Livin Food)",
+                "Per platform: Threads 4, Facebook 2, Instagram 2"
             ]
             cur.execute(
                 "INSERT INTO metadata (crawling_date, summary) VALUES (%s, %s)",
-                ("11-Nov-2026 13:21:52", json.dumps(default_summary))
+                ("18-Nov-2026 18:20:00", json.dumps(default_summary))
             )
-            
+
             initial_posts = [
-                (1, "09-Nov-2026 16:34:42", "Instagram", "Fraud", "Waspada Penipuan Mengatasnamakan Mandiri Tunas Finance - peringatan resmi MTF soal penipuan catut nama Mandiri", "Negative", "https://www.instagram.com/p/DfhBWwiEgY9/", "42 Likes"),
-                (1, "08-Nov-2026 15:38:39", "Instagram", "Fraud", "Edukasi anti-fraud Bank Mandiri Taspen - Pesan minta OTP tapi ngaku Mandiri = penipuan, Terasa Janggal Stop Dulu", "Negative", "https://www.instagram.com/p/DfeWJaYH73N/", "2 Likes"),
-                (1, "09-Nov-2026 20:16:46", "Facebook", "Security", "Klaim ada orang lain login ke Livin milik nasabah - dugaan Account Take Over, perlu verifikasi (kasus tunggal, bukan massal)", "Negative", "https://www.facebook.com/tengku.nilawana/posts/pfbid09XH9CyiRnuFg1ucq8pxQSfqAgrCUn1zJnGzamEEh15bR9JBRrbdW9PHf76uBBqWwl", "Unaccessible"),
-                (1, "08-Nov-2026 23:17:15", "Threads", "Security", "Rumor serangan siber bank Indonesia dikaitkan dengan gagal tarik tunai tanpa kartu di ATM Mandiri Nangapinoh - struk TRANSACTION DECLINED / UNABLE TO DISPENSE", "Negative", "https://www.threads.com/@hengkyrandebua/post/DffKoQvE1M_", "Unaccessible"),
-                (1, "10-Nov-2026 17:47:11", "Threads", "Fraud", "Klaster joki / farming pembukaan rekening Mandiri untuk BSU - tawar buka rekening jarak jauh, iming-iming Rp45.000-Rp150.000, souvenir, panduan via DM - risiko penyalahgunaan identitas / rekening mule", "Negative", "https://www.threads.com/@momomochidobbie/post/DfjucioGFr1", "33 Likes"),
-                (1, "08-Nov-2026 09:34:12", "Facebook", "Reputational Risk", "Gema kasus blokir Rp80,9 juta milik Koordinator AMPB Botok (kasus Agustus, sudah dibuka 26-Agu-2026) - video gunting kartu Mandiri + narasi netizen ramai pindahkan dana dari Livin + agenda demo AMPB di Bank Mandiri 09-Nov", "Negative", "https://www.facebook.com/reel/1478584697522145/", "63.9K Views"),
-                (2, "11-Nov-2026 04:06:27", "Facebook", "Livin", "Klaster gangguan Livin massal 08-11 Nov - forced password reset, Belum berhasil terhubung Status ID 80000, Layanan tidak tersedia untuk sementara, loading stuck, transfer tidak masuk, QRIS saldo terpotong - 7+ akun berbeda di Threads/Facebook", "Negative", "https://www.facebook.com/LennyMarlinaHS/posts/pfbid02c9kUHVXQoy3hK7LM1WgJ2WqLyFQ9gqiNaQP1XjmYSpRyJcekk4bTNfuF1saGxhil", "Unaccessible"),
-                (2, "09-Nov-2026 18:03:48", "Threads", "KOPRA", "KOPRA Mandiri gangguan 2 hari - login web tidak bisa, transfer di KOPRA Mobile loading terus", "Negative", "https://www.threads.com/@navagia/post/DfhLjbPE4W4", "7 Likes"),
-                (2, "09-Nov-2026 13:59:36", "Facebook", "ATM", "ATM Mandiri error - kartu sudah masuk, PIN dan nominal sudah dipilih, transaksi gagal / ATM error", "Negative", "https://www.facebook.com/reel/1610280993636968/", "78.4K Views"),
-                (2, "09-Nov-2026 14:23:23", "Facebook", "Debit Card", "Kartu Debit Mandiri terblokir - overlay Ups kartu terblokir di cabang, klaster dengan video kartu debit diblokir 11-Nov", "Negative", "https://www.facebook.com/reel/1130189796476325/", "42.8K Views"),
-                (3, "10-Nov-2026 08:53:46", "Threads", "Customer Service", "Antrean padat di KCP Bank Mandiri Bogor Gunung Putri sebelum pukul 09.00 - lobby penuh", "Negative", "https://www.facebook.com/ach.014/post/DfixZuhiS3c", "1.5K Views"),
-                (4, "08-Nov-2026 13:13:36", "Threads", "Digital Banking", "Visa Presents Livin MARKT 5-8 Nov di Senayan City - kurasi brand lokal, kuliner, travel, promo kartu Mandiri", "Positive", "https://www.threads.com/@bliblidotcom/post/DfeFjDkkQM-", "3.9K Likes"),
-                (4, "08-Nov-2026 17:19:15", "Instagram", "Livin", "Promo Wingstop x Bank Mandiri 1-24 Nov 2026", "Positive", "https://www.instagram.com/p/DfehoF8hOaH/", "3.3K Likes"),
-                (4, "09-Nov-2026 13:59:40", "Instagram", "Digital Banking", "Promo pembayaran Super Indo - Makin Hemat dengan promo pembayaran termasuk Bank Mandiri", "Positive", "https://www.instagram.com/p/DfgvnPmk4mx/", "2.8K Likes")
+                (1, "16-Nov-2026 07:04:10", "Threads", "Fraud", "SMS Phishing Mengatasnamakan MANDIRI - 13999 Poin Kartu Kredit Kedaluwarsa Disita Permanen, Link Palsu mandiri-mi.biz.id", "Negative", "https://www.threads.com/@yulianitadevia/post/DfyBoMWE8qL", "6 Comments"),
+                (1, "17-Nov-2026 13:17:46", "Instagram", "Fraud", "Telepon Penipuan Mengatasnamakan Bank Mandiri - Caller Ngaku Rizki dari Bank Mandiri, Konfirmasi Transaksi Kartu Kredit Shopee / Tokopedia Rp3 Juta, Korban Balik Ejek 'Ada Pesanan Mamamu Pak', Banyak Komentar Dapat Telepon Sama", "Negative", "https://www.instagram.com/reel/Df1Q5HqP_Td/", "3.9K Likes"),
+                (2, "16-Nov-2026 07:20:49", "Facebook", "Livin", "Saldo 4.7 Juta Jadi 3 Juta Hilang 1.7 Juta Tanpa Sepengetahuan, Tidak Bisa Buat Akun Livin, PIN Hanya Diketahui Sendiri, Cabang Sungai Penuh Jauh", "Negative", "https://www.facebook.com/asti.ananta.448921/posts/pfbid02XG1BBhsZraRvd9kyzWa5X2Fn4JREKEmu1j5G7BGKmA5r7NTsKQGUWUpay3uFs61Cl", "30 Comments"),
+                (2, "17-Nov-2026 10:21:41", "Threads", "Livin Merchant", "Livin Merchant Diblokir Setelah Pembayaran Kartu Kredit 20 Kodi Gamis - Berkas Lengkap Tapi Dana Belum Masuk Sejak 30 Sep", "Negative", "https://www.threads.com/@bapakmudagabut/post/Df09BrjH_Ca", "1 Likes, 2 Comments"),
+                (2, "17-Nov-2026 18:26:01", "Threads", "Livin Merchant", "QRIS Statis Transaksi Terpotong Tapi Dana Tidak Masuk ke Merchant, Tidak Muncul di Livin Merchant, Call Center Tidak Bisa Dihubungi", "Negative", "https://www.threads.com/@neokwards/post/Df10dHPAQ0u", "4 Comments"),
+                (2, "17-Nov-2026 23:46:47", "Threads", "Livin Merchant", "Livin Merchant Pencairan Terkendala - 2 Merchant Dana Tertahan Total Rp10.751.000, Transaksi 11-12 Nov, Dilaporkan 12 Nov, Telepon Helpdesk 14021 Berulang, CS Ubah Estimasi 3-5 Hari Jadi 90 Hari, Banyak Merchant Lain Validasi di Komentar, Pertimbangkan Pindah ke GoPay / Dana Merchant", "Negative", "https://www.threads.com/@firmansyahanggoro_/post/Df2ZKckkzkd", "23 Likes"),
+                (2, "18-Nov-2026 06:52:14", "Facebook", "Livin", "Livin Tidak Bisa Dibuka / Error 18 Nov - 3 Laporan Terpisah Pagi-Sore, Brimo Juga Kena, Pengguna Tanya Apakah Ada Yang Sama", "Negative", "https://www.facebook.com/permalink.php?story_fbid=pfbid02qWaU9QA8PCTHf7PnDBxa1hxf9QZziJKhHGbZ27xAqmuQ6auwgJyPo41gheTThWUTl&id=61557929993332", "18 Comments"),
+                (2, "18-Nov-2026 18:20:00", "Instagram", "Employee / HR", "Mandiri Diduga Paksa Karyawan Order Livin Food Harian Pakai Dana Pribadi Untuk KPI - Reimbursement Tidak Konsisten Capped Rp50k, Monitoring Duta Transaksi, Order Weekend Wajib", "Negative", "https://www.instagram.com/p/Df4Ym_NFCGs/", "6900 Likes")
             ]
-            
+
             for p in initial_posts:
                 raw_url = p[6]
                 norm_url = raw_url.strip().lower()
@@ -92,7 +79,7 @@ def init_db():
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT (normalized_url) DO NOTHING
                 """, (p[0], p[1], p[2], p[3], p[4], p[5], raw_url, norm_url, p[7]))
-                
+
         conn.commit()
         cur.close()
         conn.close()
@@ -138,15 +125,14 @@ def parse_csv_text(text):
     header = split_pipe(lines[0])
     def idx(n):
         target = n.lower().strip()
-        # 1. Exact match first (prevents 'topik' matching 'kategori topik')
         for j, h in enumerate(header):
             if h.lower().strip() == target:
                 return j
-        # 2. Substring fallback
         for j, h in enumerate(header):
             if target in h.lower().strip():
                 return j
         return -1
+
     iP, iT, iPl, iK, iTo, iS, iU, iR = (
         idx("priority"), idx("tanggal"), idx("platform"),
         idx("kategori"), idx("topik"), idx("sentimen"),
@@ -194,18 +180,18 @@ def get_dashboard_data():
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        
+
         cur.execute("SELECT crawling_date, summary FROM metadata ORDER BY id DESC LIMIT 1")
         meta = cur.fetchone()
-        crawling_date = meta["crawling_date"] if meta else "11-Nov-2026 13:21:52"
+        crawling_date = meta["crawling_date"] if meta else "18-Nov-2026 18:20:00"
         summary = json.loads(meta["summary"]) if meta and meta["summary"] else []
-        
+
         cur.execute("SELECT priority, tanggal, platform, kategori, topik, sentimen, url, react FROM posts")
         rows = [dict(r) for r in cur.fetchall()]
-        
+
         cur.close()
         conn.close()
-        
+
         rows = sort_rows(rows)
         return jsonify({
             "success": True,
@@ -244,7 +230,7 @@ def upload_csv():
     try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        
+
         cur.execute("SELECT normalized_url FROM posts")
         existing_urls = {r["normalized_url"] for r in cur.fetchall()}
 
@@ -283,7 +269,7 @@ def upload_csv():
 
         cur.execute("SELECT priority, tanggal, platform, kategori, topik, sentimen, url, react FROM posts")
         all_rows = sort_rows([dict(row) for row in cur.fetchall()])
-        
+
         cur.close()
         conn.close()
 
