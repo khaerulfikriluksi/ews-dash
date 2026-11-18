@@ -350,6 +350,25 @@
       flex-wrap: wrap;
       gap: 8px;
       margin-bottom: 18px;
+      max-height: 110px;       /* Batasi tinggi maksimal (muat sekitar 2-3 baris chip) */
+      overflow-y: auto;        /* Otomatis memunculkan scrollbar jika tanggalnya sangat banyak */
+      padding-right: 4px;
+    }
+
+    /* Mempercantik tampilan scrollbar tipis agar senada dengan dark mode */
+    .quick-dates::-webkit-scrollbar {
+      width: 6px;
+    }
+    .quick-dates::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+    .quick-dates::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+    .quick-dates::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
     }
     .chip-btn {
       background: var(--surface-subtle);
