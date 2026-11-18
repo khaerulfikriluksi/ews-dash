@@ -28,7 +28,7 @@ def init_db():
         cur.execute("""
             CREATE TABLE IF NOT EXISTS metadata (
                 id SERIAL PRIMARY KEY,
-                crawling_date TEXT NOT NULL,
+                data_date TEXT NOT NULL,
                 summary TEXT NOT NULL
             )
         """)
@@ -48,37 +48,29 @@ def init_db():
             )
         """)
 
-        cur.execute("SELECT COUNT(*) FROM posts")
+        cur.execute("SELECT COUNT(*) FROM metadata")
         if cur.fetchone()[0] == 0:
-            default_summary = [
-                "Priority 1 - 2 postingan, Negative terkait Fraud (SMS Phishing poin kartu kredit link palsu mandiri-mi.biz.id & Telepon penipuan catut nama Bank Mandiri)",
-                "Priority 2 - 6 postingan, Negative terkait Livin, Livin Merchant, dan Employee / HR (Saldo hilang 1.7 juta, Livin Merchant diblokir & pencairan dana tertahan Rp10,75 juta, Livin error 18 Nov, Dugaan paksaan order Livin Food)",
-                "Per platform: Threads 4, Facebook 2, Instagram 2"
+            sample_metadata = [
+                ("11-Nov-2026", json.dumps([
+                    "[Priority 2] [Facebook] Livin Tidak Bisa Login / Layanan Tidak Tersedia - Gagal Verifikasi Tanggal Lahir, Error Status ID 80000. Indikasi gangguan login Livin. Tanggal: 11-Nov-2026 04:06:27, Sentimen: Negative.",
+                    "[Priority 2] [Threads] Livin Ke Blokir, Daftar Ulang Gangguan, Upload KTP Gagal, CS Lama Direspon. Tanggal: 10-Nov-2026 08:53:46, Sentimen: Negative."
+                ])),
+                ("12-Nov-2026", json.dumps([
+                    "[Priority 2] [Threads] Livin Terblokir Karena Salah Password 3x, Tidak Punya Nomor Kartu Debit. Tanggal: 11-Nov-2026 16:09:17, Sentimen: Negative."
+                ])),
+                ("13-Nov-2026", json.dumps([
+                    "[Priority 2] [Facebook] Livin Registrasi Gagal Loop Sudah Terdaftar Butuh Kartu Debit/Kredit. Tanggal: 12-Nov-2026 18:03:42, Sentimen: Negative."
+                ])),
+                ("14-Nov-2026", json.dumps([
+                    "[Priority 1] [Instagram] Modus Mengatasnamakan Call Center Bank Mandiri - Uang Hilang dari Livin Setelah Ikuti Arahan Nonaktifkan Rekening. Tanggal: 13-Nov-2026 17:37:05, Sentimen: Negative."
+                ])),
+                ("15-Nov-2026", json.dumps([
+                    "[Priority 1] [Instagram] Modus Mengatasnamakan Call Center Bank Mandiri - Uang Hilang dari Livin. Tanggal: 13-Nov-2026 17:37:05, Sentimen: Negative.",
+                    "[Priority 2] [Facebook] Livin Proses Belum Dapat Dilanjutkan RPT-O2. Tanggal: 14-Nov-2026 13:58:47, Sentimen: Negative."
+                ]))
             ]
-            cur.execute(
-                "INSERT INTO metadata (crawling_date, summary) VALUES (%s, %s)",
-                ("18-Nov-2026 18:20:00", json.dumps(default_summary))
-            )
-
-            initial_posts = [
-                (1, "16-Nov-2026 07:04:10", "Threads", "Fraud", "SMS Phishing Mengatasnamakan MANDIRI - 13999 Poin Kartu Kredit Kedaluwarsa Disita Permanen, Link Palsu mandiri-mi.biz.id", "Negative", "https://www.threads.com/@yulianitadevia/post/DfyBoMWE8qL", "6 Comments"),
-                (1, "17-Nov-2026 13:17:46", "Instagram", "Fraud", "Telepon Penipuan Mengatasnamakan Bank Mandiri - Caller Ngaku Rizki dari Bank Mandiri, Konfirmasi Transaksi Kartu Kredit Shopee / Tokopedia Rp3 Juta, Korban Balik Ejek 'Ada Pesanan Mamamu Pak', Banyak Komentar Dapat Telepon Sama", "Negative", "https://www.instagram.com/reel/Df1Q5HqP_Td/", "3.9K Likes"),
-                (2, "16-Nov-2026 07:20:49", "Facebook", "Livin", "Saldo 4.7 Juta Jadi 3 Juta Hilang 1.7 Juta Tanpa Sepengetahuan, Tidak Bisa Buat Akun Livin, PIN Hanya Diketahui Sendiri, Cabang Sungai Penuh Jauh", "Negative", "https://www.facebook.com/asti.ananta.448921/posts/pfbid02XG1BBhsZraRvd9kyzWa5X2Fn4JREKEmu1j5G7BGKmA5r7NTsKQGUWUpay3uFs61Cl", "30 Comments"),
-                (2, "17-Nov-2026 10:21:41", "Threads", "Livin Merchant", "Livin Merchant Diblokir Setelah Pembayaran Kartu Kredit 20 Kodi Gamis - Berkas Lengkap Tapi Dana Belum Masuk Sejak 30 Sep", "Negative", "https://www.threads.com/@bapakmudagabut/post/Df09BrjH_Ca", "1 Likes, 2 Comments"),
-                (2, "17-Nov-2026 18:26:01", "Threads", "Livin Merchant", "QRIS Statis Transaksi Terpotong Tapi Dana Tidak Masuk ke Merchant, Tidak Muncul di Livin Merchant, Call Center Tidak Bisa Dihubungi", "Negative", "https://www.threads.com/@neokwards/post/Df10dHPAQ0u", "4 Comments"),
-                (2, "17-Nov-2026 23:46:47", "Threads", "Livin Merchant", "Livin Merchant Pencairan Terkendala - 2 Merchant Dana Tertahan Total Rp10.751.000, Transaksi 11-12 Nov, Dilaporkan 12 Nov, Telepon Helpdesk 14021 Berulang, CS Ubah Estimasi 3-5 Hari Jadi 90 Hari, Banyak Merchant Lain Validasi di Komentar, Pertimbangkan Pindah ke GoPay / Dana Merchant", "Negative", "https://www.threads.com/@firmansyahanggoro_/post/Df2ZKckkzkd", "23 Likes"),
-                (2, "18-Nov-2026 06:52:14", "Facebook", "Livin", "Livin Tidak Bisa Dibuka / Error 18 Nov - 3 Laporan Terpisah Pagi-Sore, Brimo Juga Kena, Pengguna Tanya Apakah Ada Yang Sama", "Negative", "https://www.facebook.com/permalink.php?story_fbid=pfbid02qWaU9QA8PCTHf7PnDBxa1hxf9QZziJKhHGbZ27xAqmuQ6auwgJyPo41gheTThWUTl&id=61557929993332", "18 Comments"),
-                (2, "18-Nov-2026 18:20:00", "Instagram", "Employee / HR", "Mandiri Diduga Paksa Karyawan Order Livin Food Harian Pakai Dana Pribadi Untuk KPI - Reimbursement Tidak Konsisten Capped Rp50k, Monitoring Duta Transaksi, Order Weekend Wajib", "Negative", "https://www.instagram.com/p/Df4Ym_NFCGs/", "6900 Likes")
-            ]
-
-            for p in initial_posts:
-                raw_url = p[6]
-                norm_url = raw_url.strip().lower()
-                cur.execute("""
-                    INSERT INTO posts (priority, tanggal, platform, kategori, topik, sentimen, url, normalized_url, react)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ON CONFLICT (normalized_url) DO NOTHING
-                """, (p[0], p[1], p[2], p[3], p[4], p[5], raw_url, norm_url, p[7]))
+            for m_date, m_sum in sample_metadata:
+                cur.execute("INSERT INTO metadata (data_date, summary) VALUES (%s, %s)", (m_date, m_sum))
 
         conn.commit()
         cur.close()
@@ -181,10 +173,19 @@ def get_dashboard_data():
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        cur.execute("SELECT crawling_date, summary FROM metadata ORDER BY id DESC LIMIT 1")
-        meta = cur.fetchone()
-        crawling_date = meta["crawling_date"] if meta else "18-Nov-2026 18:20:00"
-        summary = json.loads(meta["summary"]) if meta and meta["summary"] else []
+        cur.execute("SELECT data_date, summary FROM metadata ORDER BY id ASC")
+        meta_rows = cur.fetchall()
+        
+        metadata_list = []
+        for m in meta_rows:
+            try:
+                s_parsed = json.loads(m["summary"]) if m["summary"] else []
+            except Exception:
+                s_parsed = []
+            metadata_list.append({
+                "data_date": m["data_date"],
+                "summary": s_parsed
+            })
 
         cur.execute("SELECT priority, tanggal, platform, kategori, topik, sentimen, url, react FROM posts")
         rows = [dict(r) for r in cur.fetchall()]
@@ -195,8 +196,7 @@ def get_dashboard_data():
         rows = sort_rows(rows)
         return jsonify({
             "success": True,
-            "crawling_date": crawling_date,
-            "summary": summary,
+            "metadata_list": metadata_list,
             "total": len(rows),
             "rows": rows
         })
@@ -208,9 +208,10 @@ def upload_csv():
     if "file" not in request.files:
         return jsonify({"success": False, "error": "File CSV tidak ditemukan"}), 400
     f = request.files["file"]
-    crawling_date = request.form.get("crawling_date", "").strip()
-    if not crawling_date:
-        return jsonify({"success": False, "error": "crawling_date wajib diisi"}), 400
+    
+    data_date = request.form.get("data_date", "").strip() or request.form.get("date_data", "").strip() or request.form.get("crawling_date", "").strip()
+    if not data_date:
+        return jsonify({"success": False, "error": "data_date wajib diisi"}), 400
 
     try:
         raw_summary = request.form.get("summary", "[]")
@@ -260,12 +261,13 @@ def upload_csv():
             except Exception:
                 skipped_count += 1
 
-        cur.execute("SELECT crawling_date, summary FROM metadata ORDER BY id DESC LIMIT 1")
-        last_meta = cur.fetchone()
         summary_json = json.dumps(summary)
-        if not last_meta or last_meta["crawling_date"] != crawling_date or last_meta["summary"] != summary_json:
-            cur.execute("INSERT INTO metadata (crawling_date, summary) VALUES (%s, %s)", (crawling_date, summary_json))
+        cur.execute("INSERT INTO metadata (data_date, summary) VALUES (%s, %s)", (data_date, summary_json))
         conn.commit()
+
+        cur.execute("SELECT data_date, summary FROM metadata ORDER BY id ASC")
+        meta_rows = cur.fetchall()
+        metadata_list = [{"data_date": m["data_date"], "summary": json.loads(m["summary"]) if m["summary"] else []} for m in meta_rows]
 
         cur.execute("SELECT priority, tanggal, platform, kategori, topik, sentimen, url, react FROM posts")
         all_rows = sort_rows([dict(row) for row in cur.fetchall()])
@@ -275,8 +277,7 @@ def upload_csv():
 
         return jsonify({
             "success": True,
-            "crawling_date": crawling_date,
-            "summary": summary,
+            "metadata_list": metadata_list,
             "inserted_count": inserted_count,
             "skipped_count": skipped_count,
             "total": len(all_rows),
