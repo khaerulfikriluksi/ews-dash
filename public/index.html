@@ -345,31 +345,6 @@
     }
 
     /* Filters */
-    .quick-dates {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 18px;
-      max-height: 110px;       /* Batasi tinggi maksimal (muat sekitar 2-3 baris chip) */
-      overflow-y: auto;        /* Otomatis memunculkan scrollbar jika tanggalnya sangat banyak */
-      padding-right: 4px;
-    }
-
-    /* Mempercantik tampilan scrollbar tipis agar senada dengan dark mode */
-    .quick-dates::-webkit-scrollbar {
-      width: 6px;
-    }
-    .quick-dates::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 4px;
-    }
-    .quick-dates::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 4px;
-    }
-    .quick-dates::-webkit-scrollbar-thumb:hover {
-      background: var(--text-muted);
-    }
     .chip-btn {
       background: var(--surface-subtle);
       border: 1px solid var(--border);
@@ -853,7 +828,6 @@
         <h2 class="panel-title">Filter & Rentang Tanggal</h2>
         <span class="note">KPI Card, Periode, Chart, dan Summary otomatis mengikuti filter aktif</span>
       </div>
-      <div class="quick-dates" id="quickDateChips"></div>
       <div class="filters-grid">
         <div class="field-group"><label for="fPlatform">Platform</label><select id="fPlatform"><option value="">Semua Platform</option></select></div>
         <div class="field-group"><label for="fKategori">Kategori</label><select id="fKategori"><option value="">Semua Kategori</option></select></div>
