@@ -137,8 +137,14 @@ def parse_csv_text(text):
         return []
     header = split_pipe(lines[0])
     def idx(n):
+        target = n.lower().strip()
+        # 1. Exact match first (prevents 'topik' matching 'kategori topik')
         for j, h in enumerate(header):
-            if n.lower() in h.lower():
+            if h.lower().strip() == target:
+                return j
+        # 2. Substring fallback
+        for j, h in enumerate(header):
+            if target in h.lower().strip():
                 return j
         return -1
     iP, iT, iPl, iK, iTo, iS, iU, iR = (
@@ -268,7 +274,11 @@ def upload_csv():
             except Exception:
                 skipped_count += 1
 
-        cur.execute("INSERT INTO metadata (crawling_date, summary) VALUES (%s, %s)", (crawling_date, json.dumps(summary)))
+        cur.execute("SELECT crawling_date, summary FROM metadata ORDER BY id DESC LIMIT 1")
+        last_meta = cur.fetchone()
+        summary_json = json.dumps(summary)
+        if not last_meta or last_meta["crawling_date"] != crawling_date or last_meta["summary"] != summary_json:
+            cur.execute("INSERT INTO metadata (crawling_date, summary) VALUES (%s, %s)", (crawling_date, summary_json))
         conn.commit()
 
         cur.execute("SELECT priority, tanggal, platform, kategori, topik, sentimen, url, react FROM posts")
